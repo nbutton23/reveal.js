@@ -4,7 +4,7 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-		<title>reveal.js</title>
+		<title>My First Kubernetes Pull Request</title>
 
 		<link rel="stylesheet" href="css/reveal.css">
 		<link rel="stylesheet" href="css/theme/black.css">
@@ -24,8 +24,159 @@
 	<body>
 		<div class="reveal">
 			<div class="slides">
-				<section>Slide 1</section>
-				<section>Slide 2</section>
+				<section>
+					<h3>My First Kubernetes Pull Request</h3>
+				</section>
+				<section>
+					<h2>Who Am I?</h2>
+				</section>
+				<section>
+					<h2>Why This Topic?</h2>
+					<aside class="notes">
+					</aside>
+				</section>
+				<section>
+					<section>
+						<h2>What was the problem?</h2>
+					<aside class="notes">
+					</aside>
+					</section>
+					<section>
+						<img src="images/SG_limits.png"/>
+					</section>
+					<section>
+						<p>There is a limit to the number of security groups you can have for performance reasons. </p>
+					</section>
+				</section>
+				<section>
+					<section>
+						<h2>First solution</h2>
+						<p class="fragment"> Ask the community!</p>
+					</section>
+					<section>
+						<p>nathan: How would I make K8s use the same SG for every ELB?</p>
+						<p class="fragment">community: . . . Why?</p>
+						<p class="fragment">nathan: I have over 500 ELBs which means I hit the SG limit.</p>
+						<p class="fragment">community: Why not use Ingrees?</p>
+					</section>
+				</section>
+				<section>
+					<section>
+						<h2>Second solution</h2>
+						<p class="fragment">Script it!</p>
+					</section>
+					<section>
+						<h3>Pros:</h3>
+						<ol>
+							<li>Simple script</li>
+							<li>Can roll it out today</li>
+						</ol>
+					</section>
+					<section>
+						<h3>Cons:</h3>
+						<ol>
+							<li>Really just hiding the problem</li>
+							<li>Must continue to run the script</li>
+							<li>Creates a lot of API load</li>
+						</ol>
+					</section>
+				</section>
+				<section>
+					<section>
+						<h2>Third solution</h2>
+						<p class="fragment">New K8s Feature!</p>
+					</section>
+					<section>
+						<p>How about a setting in the cloud config?</p>
+						<p class="fragment">community: Sounds good!</p>
+					</section>
+					<section>
+						<img src="images/pr_01.png" />
+					</section>
+					<section>
+						<h3>In reality</h3>
+						<ul>
+							<li> 7 lines of code </li>
+							<li> 4 lines of comments</li>
+						</ul>
+					</section>
+					<section>
+						<pre><code data-trim data-noescape class="go">
+if c.cfg.Global.ElbSecurityGroup != "" {
+	securityGroupID = c.cfg.Global.ElbSecurityGroup
+} else {
+	. . .
+}
+						</code></pre>
+					</section>
+				</section>
+				<section>
+					<section>
+						<h3>Changes rolled out in 1.7</h3>
+						<h4 class="fragment">ummm. . . we have a problem</h4>
+					</section>
+					<section>
+						<img src="images/bug.png"/>
+					</section>
+				</section>
+				<section>
+					<section>
+						<h3>My Second Kubernetes Pull Request</h3>
+					</section>
+					<section>
+						<h3>The fix</h3>
+						<ul>
+							<li> 9 lines of code </li>
+							<li> 3 lines of comments</li>
+						</ul>
+					</section>
+					<section>
+						<pre class="fragment"><code data-trim data-noescape class="go">
+func (c *Cloud) setSecurityGroupIngress(. . . ) (bool, error) {
+// We do not want to make changes to the Global defined SG
+if securityGroupID == c.cfg.Global.ElbSecurityGroup {
+	return false, nil
+}
+ 					</code></pre>
+					<pre class="fragment"><code data-trim data-noescape class="go">
+func (c *Cloud) addSecurityGroupIngress(. . .) (bool, error) {
+// We do not want to make changes to the Global defined SG
+if securityGroupID == c.cfg.Global.ElbSecurityGroup {
+	return false, nil
+}
+</code></pre>
+ <pre class="fragment"><code data-trim data-noescape class="go" >
+func (c *Cloud) removeSecurityGroupIngress(. . .) (bool, error) {
+// We do not want to make changes to the Global defined SG
+if securityGroupID == c.cfg.Global.ElbSecurityGroup {
+	return false, nil
+ }
+</code></pre>
+					</section>
+				</section>
+				<section>
+					<section>
+						<h2>Why tell you about my failure?</h2>
+						<h3 class="fragment">Because I learned from it</h3>
+					</section>
+					<section>
+						<ol>
+							<li class="fragment">The opensource community is awesome</li>
+							<li class="fragment">That if you really don't know the code, you're going to break things</li>
+							<li class="fragment">Don't assume someone will catch it in CR </li>
+						</ol>
+					</section>
+					<section>
+						<p>I really really now know all the steps involved in creating an ELB</p>
+						<aside class="notes">
+						</aside>
+					</section>
+					<!-- <section>
+						<p class="fragment">func (c *Cloud) EnsureLoadBalancer(clusterName string, apiService *v1.Service, nodes []*v1.Node) (*v1.LoadBalancerStatus, error)</p>
+						<aside class="notes">
+						</aside>
+					</section> -->
+				</section>
 			</div>
 		</div>
 
